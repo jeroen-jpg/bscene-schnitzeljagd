@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Findet Niccolo und Jeroen – BScene Trail</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background:
+        radial-gradient(circle at top, rgba(249,115,22,0.35), rgba(15,23,42,0.98));
+      color: #f9fafb;
+    }
+    .card {
+      background: rgba(8, 12, 24, 0.97);
+      border-radius: 22px;
+      padding: 22px 18px 18px;
+      max-width: 460px;
+      width: 92%;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.8);
+      border: 1px solid rgba(148,163,253,0.5);
+      backdrop-filter: blur(8px);
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin: 0 0 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fbbf24;
+    }
+    h2 {
+      font-size: 1rem;
+      margin: 0 0 10px;
+      color: #e5e7eb;
+    }
+    p {
+      font-size: 0.9rem;
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+    .highlight {
+      color: #f97316;
+      font-weight: 600;
+    }
+    .options { margin-top: 10px; font-size: 0.9rem; }
+    .options div { margin: 3px 0; }
+    input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid #6b7280;
+      background: #020817;
+      color: #f9fafb;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 999px;
+      background: #fbbf24;
+      color: #111827;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:active { transform: scale(0.98); }
+    .feedback {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: #9ca3af;
+      min-height: 18px;
+    }
+    .snark { color: #f97316; }
+    .next {
+      margin-top: 14px;
+      padding: 11px;
+      border-radius: 14px;
+      background: rgba(22,163,74,0.16);
+      border: 1px solid rgba(22,163,74,0.7);
+      font-size: 0.85rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Findet Niccolo und Jeroen</h1>
+    <h2>BScene Super-Bar-Quiz-Schnitzeljagd</h2>
+
+    <p>
+      Für einen unvergesslichen Abend gehören
+      <span class="highlight">Niccolo</span> und
+      <span class="highlight">Jeroen</span> dazu. Aber wo sind sie nur?
+    </p>
+    <p>
+      Willkommen zur Super-Bar-Quiz-Schnitzeljagd der
+      <span class="highlight">BScene-Super-Ex-Vorständler</span>!!
+    </p>
+    <p>Habt ihr Bock?</p>
+
+    <div class="options">
+      <div>1. Ja</div>
+      <div>2. Nein</div>
+      <div>3. Ich will heim</div>
+      <div>4. Ich hab Hunger</div>
+    </div>
+
+    <input id="answer" type="text" placeholder="Antwortnummer oder Text eingeben" autocomplete="off" />
+    <button onclick="checkAnswer()">Antwort prüfen</button>
+
+    <div id="feedback" class="feedback"></div>
+
+    <div id="next" class="next">
+      💥 Gute Entscheidung. Dann los:<br /><br />
+      <strong>Auftrag:</strong> Nehmt die <strong>Tram 16</strong>, fahrt zum <strong>Tellplatz</strong><br />
+      und geht zur Bar <strong>„Tellplatz 3“</strong>.<br /><br />
+      Dort wartet die nächste Challenge auf euch. 🍻
+    </div>
+  </div>
+
+  <script>
+    function normalize(v) {
+      return v.toString().trim().toLowerCase();
+    }
+
+    function checkAnswer() {
+      const raw = document.getElementById('answer').value;
+      const val = normalize(raw);
+      const fb = document.getElementById('feedback');
+      const next = document.getElementById('next');
+
+      if (!val) {
+        fb.textContent = 'Einfach irgendwas drücken kann jede*r. Versuch’s nochmal. 😉';
+        next.style.display = 'none';
+        return;
+      }
+
+      const isYes =
+        val === '1' ||
+        val === 'ja' ||
+        val === 'yes' ||
+        val.includes('klar') ||
+        val.includes('bock');
+
+      const isNo =
+        val === '2' ||
+        val === 'nein' ||
+        val.includes('kein bock');
+
+      const isHome =
+        val === '3' ||
+        val.includes('heim') ||
+        val.includes('nach hause');
+
+      const isHungry =
+        val === '4' ||
+        val.includes('hunger') ||
+        val.includes('essen');
+
+      if (isYes) {
+        fb.textContent = 'Endlich jemand mit Geschmack. 🎶';
+        fb.className = 'feedback';
+        next.style.display = 'block';
+      } else if (isNo) {
+        fb.innerHTML = 'Okay. Tschüss. Die coolen Leute spielen jetzt ohne dich weiter. 🥲';
+        fb.className = 'feedback snark';
+        next.style.display = 'none';
+      } else if (isHome) {
+        fb.innerHTML = 'Perfekt. Dann bitte direkt ins Bett, ohne Umweg über Niccolo & Jeroen. 😴';
+        fb.className = 'feedback snark';
+        next.style.display = 'none';
+      } else if (isHungry) {
+        fb.innerHTML = 'Gute News: Bars haben Snacks. Spiel weiter, Problem gelöst. 🍟';
+        fb.className = 'feedback snark';
+        next.style.display = 'none';
+      } else {
+        fb.textContent = 'Kreativ, aber knapp daneben. Tipp: Option 1 ist nie falsch.';
+        fb.className = 'feedback snark';
+        next.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
