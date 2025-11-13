@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Findet Niccolo und Jeroen – Werk 8 Hardmode</title>
+  <style>
+    :root {
+      --overlay-top: rgba(0,0,0,0.28);
+      --overlay-bottom: rgba(15,23,42,0.50);
+      --fade-ms: 800ms;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #f9fafb;
+      min-height: 100vh;
+    }
+
+    /* Hintergrund-Layer: zwei Divs, die wir überblenden */
+    .bg {
+      position: fixed;
+      inset: 0;
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      will-change: opacity, background-image;
+      transition: opacity var(--fade-ms) ease;
+    }
+    #bg1 { opacity: 1; }
+    #bg2 { opacity: 0; }
+
+    /* dezentes Overlay für Lesbarkeit */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(155deg, var(--overlay-top), var(--overlay-bottom));
+    }
+
+    /* Inhalt */
+    .wrap {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .card {
+      background: rgba(8, 12, 24, 0.82);
+      border-radius: 22px;
+      padding: 22px 18px 18px;
+      max-width: 520px;
+      width: 92%;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.9);
+      border: 1px solid rgba(148,163,253,0.5);
+      backdrop-filter: blur(7px);
+    }
+    h1 {
+      font-size: 1.25rem;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fbbf24;
+    }
+    h2 {
+      font-size: 1rem;
+      margin: 0 0 10px;
+      color: #e5e7eb;
+    }
+    p { font-size: 0.9rem; margin: 4px 0; line-height: 1.5; }
+
+    .btn-primary {
+      margin-top: 12px; width: 100%; padding: 10px;
+      border: none; border-radius: 999px; background: #fbbf24; color: #111827;
+      font-weight: 700; font-size: 0.95rem; cursor: pointer;
+    }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .question-label { margin-top: 10px; font-weight: 600; font-size: 0.9rem; color: #fcd34d; }
+    .question-text { margin-top: 2px; font-size: 0.9rem; }
+
+    .options { margin-top: 8px; display: grid; gap: 6px; }
+    .option-btn {
+      padding: 8px 10px; border-radius: 999px;
+      border: 1px solid rgba(156,163,175,0.9);
+      background: rgba(9,9,15,0.96); color: #e5e7eb;
+      font-size: 0.88rem; cursor: pointer; text-align: left; transition: all .12s ease;
+    }
+    .option-btn:hover { background: rgba(248,250,252,0.08); }
+    .option-btn:active { transform: scale(0.97); }
+
+    .status { margin-top: 8px; font-size: 0.82rem; color: #9ca3af; min-height: 20px; }
+    .status.error { color: #f97316; }
+    .progress { margin-top: 4px; font-size: 0.78rem; color: #9ca3af; }
+    .shots { margin-top: 4px; font-size: 0.8rem; color: #fbbf24; font-weight: 600; }
+
+    .next {
+      margin-top: 16px; padding: 12px; border-radius: 14px;
+      background: rgba(22,163,74,0.18); border: 1px solid rgba(22,163,74,0.75);
+      font-size: 0.9rem; display: none; text-align: center;
+    }
+    .joker { margin-top: 12px; font-size: 0.78rem; color: #9ca3af; }
+    .joker span { display: block; }
+    .joker strong { color: #fbbf24; }
+
+    #quiz-area { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Hintergrund: zwei Layer + Overlay -->
+  <div id="bg1" class="bg"></div>
+  <div id="bg2" class="bg"></div>
+  <div class="overlay"></div>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>Findet Niccolo und Jeroen</h1>
+      <h2>WERK 8 – Endboss Edition</h2>
+
+      <!-- Intro -->
+      <div id="intro">
+        <p>
+          Ihr dachtet, wir warten hier gemütlich auf euch.<br>
+          Tun wir auch. Aber erst, wenn ihr beweist, dass ihr die wahre
+          <strong>BScene-Lore</strong> drauf habt. 😈
+        </p>
+        <p>
+          Regeln:
+          <br>• Jede falsche Antwort = 1 Shot (wir vertrauen eurer Ehrlichkeit).
+          <br>• Ihr dürft den <strong>Telefonjoker</strong> benutzen – aber das ist maximal peinlich.
+        </p>
+        <button class="btn-primary" onclick="startQuiz()">
+          Let’s go – Wir verdienen uns Niccolo &amp; Jeroen
+        </button>
+      </div>
+
+      <!-- Quiz -->
+      <div id="quiz-area">
+        <div id="question-label" class="question-label"></div>
+        <div id="question-text" class="question-text"></div>
+        <div id="options" class="options"></div>
+
+        <div id="status" class="status"></div>
+        <div id="progress" class="progress"></div>
+        <div id="shots" class="shots"></div>
+
+        <div id="next" class="next">
+          🏆 Ihr habt alle Hardmode-Fragen geknackt (oder verdammt viele Shots intus).<br><br>
+          Zeigt diese Seite Niccolo &amp; Jeroen als Beweis.<br>
+          Dann wird offiziell angestossen. 💜
+          <div id="shot-summary"></div>
+        </div>
+
+        <div class="joker" id="joker">
+          <strong>Telefonjoker (auf eigene Gefahr):</strong>
+          <span>Ab 3 Shots dürft ihr offiziell bei <strong>Nini</strong> anrufen: 📞 +41 79 377 19 29</span>
+          <span>Wenn das nicht hilft, ruft <strong>Tobias</strong> an: 📞 +41 76 304 62 24</span>
+          <span>Hinweis: Jede Joker-Nutzung ist sozial ein weiterer Shot. 🥃</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sounds -->
+  <audio id="zonk-sound" src="zonk.mp3" preload="auto"></audio>
+  <audio id="success-sound" src="success.mp3" preload="auto"></audio>
+
+  <script>
+    /* === Deine Bilder hier eintragen ===
+       Reihenfolge = Reihenfolge der Fragen.
+       Lege die Dateien einfach in den gleichen Ordner. */
+    const BG_IMAGES = [
+      'bg-werk8-1.jpg',
+      'bg-werk8-2.jpg',
+      'bg-werk8-3.jpg',
+      'bg-werk8-4.jpg',
+      'bg-werk8-5.jpg'
+    ];
+
+    // Fragen
+    const questions = [
+      {
+        label: "Frage 1",
+        text: "Wie viele OK-Mitglieder hat die BScene aktuell?",
+        options: ["15", "18", "21", "25"],
+        correctIndex: 3
+      },
+      {
+        label: "Frage 2",
+        text: "In wie vielen Clubs findet die BScene nächstes Jahr statt?",
+        options: ["7", "9", "11", "15"],
+        correctIndex: 2
+      },
+      {
+        label: "Frage 3",
+        text: "Wie hiess die Praktikantin im Jahr 2023/2024?",
+        options: ["Lucia", "Samira", "Sophie", "Rea König"],
+        correctIndex: 3
+      },
+      {
+        label: "Frage 4",
+        text: "Was hat Niccolo für ein Instrument gespielt?",
+        options: ["Bass", "Schlagzeug", "Gitarre", "Kazoo"],
+        correctIndex: 1
+      },
+      {
+        label: "Frage 5",
+        text: "Wann ist Jeroen eigentlich an der BScene aufgetreten?",
+        options: ["2013", "2014", "2015", "2018"],
+        correctIndex: 2
+      }
+    ];
+
+    // State
+    let current = 0;
+    let shots = 0;
+    let activeBg = 1; // 1 oder 2
+
+    // DOM
+    const introEl = document.getElementById("intro");
+    const quizAreaEl = document.getElementById("quiz-area");
+    const labelEl = document.getElementById("question-label");
+    const textEl = document.getElementById("question-text");
+    const optionsEl = document.getElementById("options");
+    const statusEl = document.getElementById("status");
+    const progressEl = document.getElementById("progress");
+    const shotsEl = document.getElementById("shots");
+    const nextEl = document.getElementById("next");
+    const shotSummaryEl = document.getElementById("shot-summary");
+    const jokerEl = document.getElementById("joker");
+
+    const bg1 = document.getElementById('bg1');
+    const bg2 = document.getElementById('bg2');
+
+    const zonk = document.getElementById("zonk-sound");
+    const success = document.getElementById("success-sound");
+
+    // Bilder vorladen
+    const preloaded = [];
+    BG_IMAGES.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      preloaded.push(img);
+    });
+
+    function setBackgroundFor(index) {
+      const src = BG_IMAGES[index % BG_IMAGES.length] || BG_IMAGES[0];
+      if (activeBg === 1) {
+        bg2.style.backgroundImage = `url('${src}')`;
+        // crossfade
+        bg2.style.opacity = '1';
+        bg1.style.opacity = '0';
+        activeBg = 2;
+      } else {
+        bg1.style.backgroundImage = `url('${src}')`;
+        bg1.style.opacity = '1';
+        bg2.style.opacity = '0';
+        activeBg = 1;
+      }
+    }
+
+    function play(sound) {
+      if (!sound) return;
+      sound.currentTime = 0;
+      sound.play().catch(()=>{});
+    }
+
+    function startQuiz() {
+      // erstes Bild setzen
+      if (BG_IMAGES.length) {
+        bg1.style.backgroundImage = `url('${BG_IMAGES[0]}')`;
+      }
+      introEl.style.display = "none";
+      quizAreaEl.style.display = "block";
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = questions[current];
+      labelEl.textContent = q.label;
+      textEl.textContent = q.text;
+      statusEl.textContent = "";
+      statusEl.className = "status";
+      progressEl.textContent = `Frage ${current + 1} von ${questions.length}`;
+      shotsEl.textContent = shots > 0 ? `Shots bisher (ehrlich bleiben): ${shots}` : "";
+      nextEl.style.display = "none";
+      shotSummaryEl.textContent = "";
+
+      // Joker-Hinweis dynamisch (wird „freigeschaltet“ ab 3 Shots)
+      jokerEl.style.opacity = shots >= 3 ? '1' : '0.72';
+
+      // Optionen zeichnen
+      optionsEl.innerHTML = "";
+      q.options.forEach((opt, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.className = "option-btn";
+        btn.onclick = () => checkAnswer(index);
+        optionsEl.appendChild(btn);
+      });
+
+      // Hintergrund wechseln (außer bei erster Frage schon gesetzt)
+      if (current > 0) setBackgroundFor(current);
+    }
+
+    function checkAnswer(selectedIndex) {
+      const q = questions[current];
+
+      if (selectedIndex === q.correctIndex) {
+        statusEl.textContent = getSuccessText(current);
+        statusEl.className = "status";
+        play(success);
+        current++;
+
+        if (current < questions.length) {
+          // nächstes Bild + nächste Frage
+          setTimeout(renderQuestion, 900);
+        } else {
+          finishQuiz();
+        }
+      } else {
+        shots++;
+        statusEl.textContent = getZonkText(current);
+        statusEl.className = "status error";
+        shotsEl.textContent = `Shots bisher (ehrlich bleiben): ${shots}`;
+        play(zonk);
+        // bei sehr vielen Shots den Joker „empfehlen“
+        if (shots === 3) {
+          statusEl.textContent += " — Zeit für den Telefonjoker? 📞";
+        }
+      }
+    }
+
+    function finishQuiz() {
+      progressEl.textContent = "Alle Fragen beantwortet. 🔓";
+      nextEl.style.display = "block";
+      shotSummaryEl.textContent =
+        `Offizielles Ergebnis: Ihr schuldet ${shots} Shot${shots === 1 ? '' : 's'} (mindestens).`;
+      // optional: letztes Bild nochmal blenden
+      setBackgroundFor(current);
+    }
+
+    function getSuccessText(i) {
+      switch (i) {
+        case 0: return "Sauber. Ihr kennt eure eigene Orga. ✅";
+        case 1: return "Richtig. 11 Clubs – Basel wird BScene.";
+        case 2: return "Jawoll. Rea König – obviously. ✨";
+        case 3: return "Natürlich Schlagzeug. Was sonst. 🥁";
+        case 4: return "2015. Historisch korrekt. Respekt. 🙌";
+        default: return "Nice.";
+      }
+    }
+
+    function getZonkText(i) {
+      switch (i) {
+        case 0: return "Zonk! Und jetzt ein Shot für fehlende Vereinsliebe. 🥃";
+        case 1: return "Zonk! Noch ein Shot. Zahlen sind schwer.";
+        case 2: return "Zonk! Die Praktikantin heisst Rea. Shot drauf. 🍹";
+        case 3: return "Zonk! Kein Kazoo-Gott. Shot-Time.";
+        case 4: return "Zonk! Falsches Jahr, falsche Timeline. Noch ein Shot.";
+        default: return "Zonk! Shot! 🔔";
+      }
+    }
+  </script>
+</body>
+</html>

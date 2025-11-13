@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Findet Niccolo und Jeroen – Tellplatz 3</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background:
+        linear-gradient(155deg, rgba(0,0,0,0.35), rgba(15,23,42,0.55)),
+        url('bg-station2.jpg') center center / cover no-repeat fixed;
+      color: #f9fafb;
+    }
+    .card {
+      background: rgba(8, 12, 24, 0.78);
+      border-radius: 22px;
+      padding: 22px 18px 18px;
+      max-width: 480px;
+      width: 92%;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.9);
+      border: 1px solid rgba(148,163,253,0.5);
+      backdrop-filter: blur(7px);
+    }
+    h1 {
+      font-size: 1.25rem;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fbbf24;
+    }
+    h2 {
+      font-size: 1rem;
+      margin: 0 0 8px;
+      color: #e5e7eb;
+    }
+    p {
+      font-size: 0.9rem;
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+    .question-label {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fcd34d;
+    }
+    .question-text {
+      margin-top: 2px;
+      font-size: 0.9rem;
+    }
+    input {
+      width: 100%;
+      margin-top: 8px;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid #6b7280;
+      background: #020817;
+      color: #f9fafb;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 999px;
+      background: #fbbf24;
+      color: #111827;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:active { transform: scale(0.98); }
+    .status {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: #9ca3af;
+      min-height: 18px;
+    }
+    .status.error { color: #f97316; }
+    .progress {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    .next {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(22,163,74,0.18);
+      border: 1px solid rgba(22,163,74,0.75);
+      font-size: 0.9rem;
+      display: none;
+    }
+    .next a {
+      color: #22c55e;
+      font-weight: 600;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .final-call {
+      margin-top: 10px;
+      font-weight: 600;
+      color: #fbbf24;
+      text-align: center;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Findet Niccolo und Jeroen</h1>
+    <h2>Station – Tellplatz 3</h2>
+
+    <p>Willkommen in der Insider-Zone. Nur wer BScene wirklich kennt, kommt zum Ziel. 🍻</p>
+
+    <div id="question-label" class="question-label"></div>
+    <div id="question-text" class="question-text"></div>
+
+    <input id="answer" type="text" placeholder="Antwort eingeben" autocomplete="off" />
+    <button onclick="checkAnswer()">Antwort prüfen</button>
+
+    <div id="status" class="status"></div>
+    <div id="progress" class="progress"></div>
+
+    <div id="next" class="next">
+      ✅ Alle Fragen korrekt. Ihr seid offiziell <strong>BScene Nerd-Elite</strong>. 🏆
+      <div class="final-call">
+        Trinkt euren Drink aus 🍹<br/>
+        und geht zu Fuss ins <strong>WERK 8</strong>.<br/>
+        Dort warten <strong>Niccolo und Jeroen</strong> auf euch. 💜
+      </div>
+      👉 <a href="https://share.google/JXbgUD6jYayf2Dgtb" target="_blank">
+        Route zum WERK 8 auf Google Maps öffnen
+      </a>
+    </div>
+  </div>
+
+  <!-- Sounds: beide Dateien ins gleiche Verzeichnis legen -->
+  <audio id="zonk-sound" src="zonk.mp3" preload="auto"></audio>
+  <audio id="success-sound" src="success.mp3" preload="auto"></audio>
+
+  <script>
+    const questions = [
+      {
+        label: "Frage 1",
+        text: "Welche Farbe hatte das Eintrittsbändeli im Jahr 2019?",
+        correct: ["rot", "red"]
+      },
+      {
+        label: "Frage 2",
+        text: "Seit welcher Ausgabe gibt es den Kreis des Vertrauens?",
+        correct: ["2022", "seit2022", "ab2022"]
+      },
+      {
+        label: "Frage 3",
+        text: "Wann ist Niccolo nicht in die Retraite mitgereist, sondern nur online?",
+        correct: ["2020"]
+      }
+    ];
+
+    let current = 0;
+
+    const labelEl = document.getElementById("question-label");
+    const textEl = document.getElementById("question-text");
+    const statusEl = document.getElementById("status");
+    const progressEl = document.getElementById("progress");
+    const answerEl = document.getElementById("answer");
+    const nextBox = document.getElementById("next");
+    const zonk = document.getElementById("zonk-sound");
+    const success = document.getElementById("success-sound");
+
+    function normalize(v) {
+      return v.toString().trim().toLowerCase().replace(/\s+/g, "");
+    }
+
+    function play(sound) {
+      if (!sound) return;
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+
+    function renderQuestion() {
+      const q = questions[current];
+      labelEl.textContent = q.label;
+      textEl.textContent = q.text;
+      statusEl.textContent = "";
+      statusEl.className = "status";
+      progressEl.textContent = `Frage ${current + 1} von ${questions.length}`;
+      answerEl.value = "";
+      answerEl.focus();
+      nextBox.style.display = "none";
+    }
+
+    function getSuccessText(i) {
+      if (i === 0) return "Korrekt. 2019 war rot – obviously. 🔴";
+      if (i === 1) return "Yes. Kreis des Vertrauens seit 2022. Vertrauen ++.";
+      if (i === 2) return "Genau. 2020 war Remote-Niccolo. 📡";
+      return "Nice.";
+    }
+
+    function getZonkText(i) {
+      if (i === 0) return "Zonk! Denk an BScene-Farben & Leidenschaft. 🔴";
+      if (i === 1) return "Zonk! So lange gibt's den Kreis noch nicht. 20er-Jahre…";
+      if (i === 2) return "Zonk! Tipp: Das Jahr, in dem alle plötzlich Zoom kannten.";
+      return "Zonk! Versuchs nochmal.";
+    }
+
+    function checkAnswer() {
+      const val = normalize(answerEl.value);
+      const q = questions[current];
+
+      if (!val) {
+        statusEl.textContent = "Antwort eintippen ist Teil vom Spiel. 😉";
+        statusEl.className = "status";
+        return;
+      }
+
+      const correct = q.correct.some(c => val === c);
+
+      if (correct) {
+        statusEl.textContent = getSuccessText(current);
+        statusEl.className = "status";
+        play(success);
+        current++;
+
+        if (current < questions.length) {
+          setTimeout(renderQuestion, 800);
+        } else {
+          progressEl.textContent = "Alle Fragen geknackt. 🔓";
+          nextBox.style.display = "block";
+        }
+      } else {
+        statusEl.textContent = getZonkText(current);
+        statusEl.className = "status error";
+        play(zonk);
+      }
+    }
+
+    // Init
+    renderQuestion();
+  </script>
+</body>
+</html>
