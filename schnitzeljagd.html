@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BScene Schnitzeljagd – Levels</title>
+  <style>
+    :root {
+      --overlay-top: rgba(0,0,0,0.28);
+      --overlay-bottom: rgba(15,23,42,0.52);
+      --fade-ms: 800ms;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #f9fafb;
+      min-height: 100vh;
+    }
+
+    .bg {
+      position: fixed;
+      inset: 0;
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      will-change: opacity, background-image;
+      transition: opacity var(--fade-ms) ease;
+    }
+    #bg1 { opacity: 1; }
+    #bg2 { opacity: 0; }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(155deg, var(--overlay-top), var(--overlay-bottom));
+    }
+
+    .wrap {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .card {
+      background: rgba(8, 12, 24, 0.84);
+      border-radius: 22px;
+      padding: 22px 18px 18px;
+      max-width: 540px;
+      width: 92%;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.9);
+      border: 1px solid rgba(148,163,253,0.5);
+      backdrop-filter: blur(7px);
+    }
+    h1 {
+      font-size: 1.25rem;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #fbbf24;
+    }
+    h2 {
+      font-size: 1rem;
+      margin: 0 0 8px;
+      color: #e5e7eb;
+    }
+    p {
+      font-size: 0.9rem;
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+    .btn-primary, .btn-small {
+      border: none;
+      border-radius: 999px;
+      background: #fbbf24;
+      color: #111827;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-primary {
+      margin-top: 12px;
+      width: 100%;
+      padding: 10px;
+      font-size: 0.95rem;
+    }
+    .btn-small {
+      margin-top: 8px;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+    }
+    .btn-primary:active, .btn-small:active { transform: scale(0.97); }
+
+    .question-label {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fcd34d;
+    }
+    .question-text {
+      margin-top: 2px;
+      font-size: 0.9rem;
+    }
+    .options {
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    .option-btn {
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(156,163,175,0.9);
+      background: rgba(9,9,15,0.96);
+      color: #e5e7eb;
+      font-size: 0.88rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all .12s ease;
+    }
+    .option-btn:hover { background: rgba(248,250,252,0.08); }
+    .option-btn:active { transform: scale(0.97); }
+
+    .input-wrap {
+      margin-top: 8px;
+    }
+    .input-wrap input {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 10px;
+      border: 1px solid #6b7280;
+      background: #020817;
+      color: #f9fafb;
+      font-size: 0.95rem;
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      color: #9ca3af;
+      min-height: 20px;
+    }
+    .status.error { color: #f97316; }
+
+    .progress {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+
+    .joker {
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    .joker span { display: block; }
+    .joker strong { color: #fbbf24; }
+
+    #quiz-area, #hint1, #hint2, #final-screen { display: none; }
+
+    .hint-block p { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div id="bg1" class="bg"></div>
+  <div id="bg2" class="bg"></div>
+  <div class="overlay"></div>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>BScene Schnitzeljagd</h1>
+      <h2>Findet Niccolo &amp; Jeroen – Levelmodus</h2>
+
+      <!-- Intro -->
+      <div id="intro">
+        <p>
+          Ihr habt den Tellplatz geschafft – nice. 🎉<br>
+          Jetzt kommen mehrere Quiz-Levels. Nach jedem Level gibt es einen neuen
+          Hint für euren Weg.
+        </p>
+        <p>
+          Level 1: 9 Fragen – dann ein Hint mit Zusatzfrage.<br>
+          Level 2: 3 Fragen – dann Tram-Hint.<br>
+          Level 3: 3 fiese Insiderfragen – dann das Finale. 🚀
+        </p>
+        <button class="btn-primary" onclick="startQuiz()">
+          Los geht’s – Level 1 starten
+        </button>
+      </div>
+
+      <!-- Quiz -->
+      <div id="quiz-area">
+        <div id="question-label" class="question-label"></div>
+        <div id="question-text" class="question-text"></div>
+        <div id="options" class="options"></div>
+
+        <div id="text-input" class="input-wrap">
+          <input id="free-answer" type="text" placeholder="Antwort eingeben" autocomplete="off" />
+          <button class="btn-small" onclick="submitTextAnswer()">Antwort prüfen</button>
+        </div>
+
+        <div id="status" class="status"></div>
+        <div id="progress" class="progress"></div>
+
+        <div class="joker">
+          <strong>Telefonjoker (auf eigene Gefahr):</strong>
+          <span>📞 Nini Saladin: +41 79 377 19 29</span>
+          <span>📞 Tobias Metzger: +41 76 304 62 24</span>
+          <span>Hinweis: Joker-Einsatz ist moralisch ein kleiner Fail. 😜</span>
+        </div>
+      </div>
+
+      <!-- Hint 1 – eigene Seite mit Hint-Frage (Bundesbahn) -->
+      <div id="hint1">
+        <div class="hint-block">
+          <p><strong>Level 1 geschafft! 🎯</strong></p>
+          <p>
+            Hint 1: Verlasst die Bar und geht in Richtung der SBB-Bahn-Gleise.
+            Kurz vor der Gundeli-Passerelle gibt es ein Restaurant, das für
+            viele BScene-Geschichten verantwortlich ist...
+          </p>
+          <p><em>Und sagt mir, wie dieses Restaurant heisst.</em></p>
+          <div class="input-wrap">
+            <input id="hint1-answer" type="text" placeholder="Name des Restaurants" autocomplete="off" />
+            <button class="btn-small" onclick="checkHint1()">Antwort prüfen</button>
+          </div>
+          <div id="hint1-status" class="status"></div>
+        </div>
+      </div>
+
+      <!-- Hint 2 – nach Level 2 -->
+      <div id="hint2">
+        <div class="hint-block">
+          <p><strong>Level 2 geschafft! 🚌</strong></p>
+          <p>
+            Hint 2: Überquert die <strong>Gundeli-Passerelle</strong> und
+            steigt in die <strong>11er Tram</strong>, welche euch aus der Stadt bringt.
+          </p>
+          <p>
+            Fahrt mit der 11 bis ihr Basel langsam hinter euch lasst...
+            Ihr werdet sie noch brauchen: die Haltestelle <strong>«Dreispitz»</strong>.
+          </p>
+          <button class="btn-primary btn-small" onclick="startLevel3()">
+            Weiter zu Level 3 (Insiderfragen)
+          </button>
+        </div>
+      </div>
+
+      <!-- Finaler Screen -->
+      <div id="final-screen">
+        <div class="hint-block">
+          <p><strong>Level 3 geschafft! 🤯</strong></p>
+          <p>
+            Letzter Hint &amp; Finale:
+          </p>
+          <p>
+            Verlasst die Tram bei der Haltestelle <strong>«Dreispitz»</strong>,
+            überquert die Strasse und lauft zur <strong>Rakete 🚀</strong>.
+          </p>
+          <p>
+            Dort findet ihr <strong>Jeroen und Niccolo</strong> – und hoffentlich
+            ein paar Drinks zur Belohnung. 💜
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sounds -->
+  <audio id="zonk-sound" src="zonk.mp3" preload="auto"></audio>
+  <audio id="success-sound" src="success.mp3" preload="auto"></audio>
+
+  <script>
+    // === Hintergrundbilder ===
+   const BG_IMAGES = [
+      'bg-trail-1.jpg',
+      'bg-trail-2.jpg',
+      'bg-trail-3.jpg',
+      'bg-trail-4.jpg',
+      'bg-trail-5.jpg',
+      'bg-trail-6.jpg',
+      'bg-trail-7.jpg',
+      'bg-trail-8.jpg',
+      'bg-trail-9.jpg',
+      'bg-trail-10.jpg',
+      'bg-trail-11.jpg',
+    ];
+
+    // Level 1 – 9 Fragen (MC)
+    const level1Questions = [
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 1',
+        text: 'Wie viele OK-Mitglieder hat die BScene aktuell?',
+        options: ['15', '18', '21', '25'],
+        correctIndex: 3
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 2',
+        text: 'In wie vielen Clubs findet die BScene 2026 statt?',
+        options: ['7', '9', '11', '15'],
+        correctIndex: 2
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 3',
+        text: 'Wie hiess die Praktikantin im Jahr 2023/2024?',
+        options: ['Lucia', 'Samira', 'Sophie', 'Rea König'],
+        correctIndex: 3
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 4',
+        text: 'Was hat Niccolo für ein Instrument gespielt?',
+        options: ['Bass', 'Schlagzeug', 'Gitarre', 'Kazoo'],
+        correctIndex: 1
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 5',
+        text: 'Wann ist Jeroen an der BScene aufgetreten?',
+        options: ['2013', '2014', '2015', '2018'],
+        correctIndex: 2
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 6',
+        text: 'Welche Farbe hatte das Eintrittsbändeli im Jahr 2019?',
+        options: ['Blau', 'Grün', 'Rot', 'Gelb'],
+        correctIndex: 2
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 7',
+        text: 'Seit welcher Ausgabe gibt es den Kreis des Vertrauens?',
+        options: ['2018', '2020', '2022', '2024'],
+        correctIndex: 2
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 8',
+        text: 'In wie vielen Kantonen findet die BScene statt?',
+        options: ['1', '2', '3', '4'],
+        correctIndex: 1
+      },
+      {
+        type: 'mc',
+        label: 'Level 1 – Frage 9',
+        text: 'Wie viele Konzerte sind für die BScene 2026 geplant?',
+        options: ['36', '42', '50', '54'],
+        correctIndex: 3
+      }
+    ];
+
+    // Level 2 – 3 Fragen (MC)
+    const level2Questions = [
+      {
+        type: 'mc',
+        label: 'Level 2 – Frage 1',
+        text: 'Wie viele Tage dauert die Jubiläumsausgabe der BScene 2026?',
+        options: ['2', '3', '4', '5'],
+        correctIndex: 2
+      },
+      {
+        type: 'mc',
+        label: 'Level 2 – Frage 2',
+        text: 'Wie hoch ist der reguläre Wochenpass (ohne Frühbucher:innen-Rabatt)?',
+        options: ['80 CHF', '100 CHF', '125 CHF', '160 CHF'],
+        correctIndex: 2
+      },
+      {
+        type: 'mc',
+        label: 'Level 2 – Frage 3',
+        text: 'Welche dieser Zahlen ist <strong>kein</strong> offizieller Ticketpreis?',
+        options: ['15 CHF', '25 CHF', '35 CHF', '50 CHF'],
+        correctIndex: 2
+      }
+    ];
+
+    // Level 3 – 3 schwere Textfragen
+    const level3Questions = [
+      {
+        type: 'text',
+        label: 'Level 3 – Frage 1',
+        text: 'Was wäre Niccolos liebster Main Act an der BScene?',
+        correctAnswers: ['ninichuba', 'nini chuba']
+      },
+      {
+        type: 'text',
+        label: 'Level 3 – Frage 2',
+        text: 'Weshalb musste Jeroen kurz vor BScene-Eröffnung in den Spital?',
+        correctAnswers: [
+          'kopfwundedurchstromstecker',
+          'kopfwundewegenstromstecker',
+          'kopfwunde',
+          'stromstecker'
+        ]
+      },
+      {
+        type: 'text',
+        label: 'Level 3 – Frage 3',
+        text: 'In welchem Jahr musste eine BScene-Ausgabe wegen der finanziellen Lage ausfallen?',
+        correctAnswers: ['2025']
+      }
+    ];
+
+    let level = 1;
+    let index = 0;
+    let activeBg = 1;
+    let globalQuestionCounter = 0;
+
+    const introEl = document.getElementById('intro');
+    const quizAreaEl = document.getElementById('quiz-area');
+    const hint1El = document.getElementById('hint1');
+    const hint2El = document.getElementById('hint2');
+    const finalEl = document.getElementById('final-screen');
+
+    const labelEl = document.getElementById('question-label');
+    const textEl = document.getElementById('question-text');
+    const optionsEl = document.getElementById('options');
+    const textInputWrap = document.getElementById('text-input');
+    const freeAnswerInput = document.getElementById('free-answer');
+    const statusEl = document.getElementById('status');
+    const progressEl = document.getElementById('progress');
+
+    const bg1 = document.getElementById('bg1');
+    const bg2 = document.getElementById('bg2');
+    const zonk = document.getElementById('zonk-sound');
+    const success = document.getElementById('success-sound');
+
+    const hint1Status = document.getElementById('hint1-status');
+
+    // Bilder vorladen
+    BG_IMAGES.forEach(src => { const img = new Image(); img.src = src; });
+
+    function currentQuestions() {
+      if (level === 1) return level1Questions;
+      if (level === 2) return level2Questions;
+      if (level === 3) return level3Questions;
+      return [];
+    }
+
+    function setBackgroundFor(n) {
+      const src = BG_IMAGES.length ? BG_IMAGES[n % BG_IMAGES.length] : null;
+      if (!src) return;
+      if (activeBg === 1) {
+        bg2.style.backgroundImage = `url('${src}')`;
+        bg2.style.opacity = '1';
+        bg1.style.opacity = '0';
+        activeBg = 2;
+      } else {
+        bg1.style.backgroundImage = `url('${src}')`;
+        bg1.style.opacity = '1';
+        bg2.style.opacity = '0';
+        activeBg = 1;
+      }
+    }
+
+    function play(sound) {
+      if (!sound) return;
+      sound.currentTime = 0;
+      sound.play().catch(() => {});
+    }
+
+    function startQuiz() {
+      level = 1;
+      index = 0;
+      globalQuestionCounter = 0;
+      introEl.style.display = 'none';
+      hint1El.style.display = 'none';
+      hint2El.style.display = 'none';
+      finalEl.style.display = 'none';
+      quizAreaEl.style.display = 'block';
+      if (BG_IMAGES.length) {
+        bg1.style.backgroundImage = `url('${BG_IMAGES[0]}')`;
+      }
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const qs = currentQuestions();
+      if (index >= qs.length) {
+        // Level ende
+        if (level === 1) {
+          showHint1();
+        } else if (level === 2) {
+          showHint2();
+        } else if (level === 3) {
+          showFinal();
+        }
+        return;
+      }
+
+      const q = qs[index];
+      labelEl.textContent = q.label;
+      textEl.innerHTML = q.text;
+      statusEl.textContent = '';
+      statusEl.className = 'status';
+
+      progressEl.textContent = `Level ${level} – Frage ${index + 1} von ${qs.length}`;
+
+      optionsEl.innerHTML = '';
+      textInputWrap.style.display = q.type === 'text' ? 'block' : 'none';
+      if (q.type === 'mc') {
+        q.options.forEach((opt, i) => {
+          const btn = document.createElement('button');
+          btn.textContent = opt;
+          btn.className = 'option-btn';
+          btn.onclick = () => checkMcAnswer(i);
+          optionsEl.appendChild(btn);
+        });
+      } else {
+        freeAnswerInput.value = '';
+        freeAnswerInput.focus();
+      }
+
+      if (globalQuestionCounter > 0) {
+        setBackgroundFor(globalQuestionCounter);
+      }
+    }
+
+    function normalize(str) {
+      return str.toString().trim().toLowerCase().replace(/\s+/g, '');
+    }
+
+    function checkMcAnswer(idx) {
+      const q = currentQuestions()[index];
+      if (q.type !== 'mc') return;
+      if (idx === q.correctIndex) {
+        handleCorrect();
+      } else {
+        handleWrong();
+      }
+    }
+
+    function submitTextAnswer() {
+      const q = currentQuestions()[index];
+      if (q.type !== 'text') return;
+      const val = normalize(freeAnswerInput.value);
+      if (!val) {
+        statusEl.textContent = 'Ein bisschen Text wäre schön. 😉';
+        statusEl.className = 'status';
+        return;
+      }
+      const ok = q.correctAnswers.some(ans => val === ans);
+      if (ok) {
+        handleCorrect();
+      } else {
+        handleWrong();
+      }
+    }
+
+    function handleCorrect() {
+      play(success);
+      statusEl.textContent = getSuccessText();
+      statusEl.className = 'status';
+      index++;
+      globalQuestionCounter++;
+      setTimeout(renderQuestion, 800);
+    }
+
+    function handleWrong() {
+      play(zonk);
+      statusEl.textContent = getZonkText();
+      statusEl.className = 'status error';
+    }
+
+    function getSuccessText() {
+      if (level === 1) return 'Nice, ihr bewegt euch Richtung Hint 1. ✅';
+      if (level === 2) return 'Stabil, Level 2 fast geschafft. 🎯';
+      if (level === 3) return 'Respekt, das sind echte Insider. 🙌';
+      return 'Richtig!';
+    }
+
+    function getZonkText() {
+      if (level === 1) return 'Zonk! Vielleicht doch kurz in Erinnerungen kramen?';
+      if (level === 2) return 'Nope. Zahlen & Preise sind tricky.';
+      if (level === 3) return 'Zonk. Das sind die fiesen Insider-Fragen. Versuch’s nochmal.';
+      return 'Zonk!';
+    }
+
+    // === Hint 1 (Bundesbahn) ===
+    function showHint1() {
+      quizAreaEl.style.display = 'none';
+      hint1El.style.display = 'block';
+      hint1Status.textContent = '';
+      hint1Status.className = 'status';
+      document.getElementById('hint1-answer').value = '';
+    }
+
+    function checkHint1() {
+      const raw = document.getElementById('hint1-answer').value;
+      const val = normalize(raw);
+      const ok =
+        val === 'bundesbahn' ||
+        val === 'restaurantbundesbahn' ||
+        val === 'restaurantbundesbahn';
+      if (!val) {
+        hint1Status.textContent = 'Ihr wart doch hoffentlich wirklich dort... 😉';
+        hint1Status.className = 'status';
+        return;
+      }
+      if (ok) {
+        hint1Status.textContent = 'Genau – Restaurant Bundesbahn. Willkommen in Level 2! 🎉';
+        hint1Status.className = 'status';
+        setTimeout(() => {
+          hint1El.style.display = 'none';
+          level = 2;
+          index = 0;
+          quizAreaEl.style.display = 'block';
+          renderQuestion();
+        }, 1200);
+      } else {
+        hint1Status.textContent = 'Zonk. Das ist nicht der Name. Nochmal hinlaufen? 😈';
+        hint1Status.className = 'status error';
+        play(zonk);
+      }
+    }
+
+    // === Hint 2 (Passerelle + Tram 11 + Dreispitz) ===
+    function showHint2() {
+      quizAreaEl.style.display = 'none';
+      hint2El.style.display = 'block';
+    }
+
+    function startLevel3() {
+      hint2El.style.display = 'none';
+      level = 3;
+      index = 0;
+      quizAreaEl.style.display = 'block';
+      renderQuestion();
+    }
+
+    // === Finale Raketen-Seite ===
+    function showFinal() {
+      quizAreaEl.style.display = 'none';
+      finalEl.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
