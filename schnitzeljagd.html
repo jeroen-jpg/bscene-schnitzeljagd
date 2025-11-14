@@ -27,6 +27,7 @@
       background-repeat: no-repeat;
       will-change: opacity, background-image;
       transition: opacity var(--fade-ms) ease;
+      z-index: 0;
     }
     #bg1 { opacity: 1; }
     #bg2 { opacity: 0; }
@@ -36,6 +37,7 @@
       inset: 0;
       pointer-events: none;
       background: linear-gradient(155deg, var(--overlay-top), var(--overlay-bottom));
+      z-index: 1;
     }
 
     .wrap {
@@ -45,6 +47,7 @@
       align-items: center;
       justify-content: center;
       padding: 16px;
+      z-index: 2;
     }
     .card {
       background: rgba(8, 12, 24, 0.84);
@@ -161,12 +164,41 @@
     #quiz-area, #hint1, #hint2, #final-screen { display: none; }
 
     .hint-block p { margin-bottom: 6px; }
+
+    /* Shot-Barometer oben rechts */
+    .shot-counter {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 50;
+      background: rgba(15,23,42,0.92);
+      border-radius: 999px;
+      padding: 8px 16px;
+      border: 2px solid #fbbf24;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    }
+    .shot-counter span.value {
+      font-size: 1.1rem;
+      color: #facc15;
+    }
   </style>
 </head>
 <body>
   <div id="bg1" class="bg"></div>
   <div id="bg2" class="bg"></div>
   <div class="overlay"></div>
+
+  <!-- Shot-Barometer -->
+  <div id="shot-counter" class="shot-counter">
+    🥃 Shots: <span class="value" id="shot-value">0</span>
+  </div>
 
   <div class="wrap">
     <div class="card">
@@ -181,12 +213,13 @@
           Hint für euren Weg.
         </p>
         <p>
-          Level 1: 9 Fragen – dann ein Hint mit Zusatzfrage.<br>
-          Level 2: 3 Fragen – dann Tram-Hint.<br>
-          Level 3: 3 fiese Insiderfragen – dann das Finale. 🚀
+        Aber seid bedacht mit euren Antworten!!
+        </p>
+        <p>
+          Jede falsche Antwort = 1 Shot im Barometer oben rechts. 😈
         </p>
         <button class="btn-primary" onclick="startQuiz()">
-          Los geht’s – Level 1 starten
+          Los geht’s – mit Level 1 starten wir!
         </button>
       </div>
 
@@ -208,7 +241,7 @@
           <strong>Telefonjoker (auf eigene Gefahr):</strong>
           <span>📞 Nini Saladin: +41 79 377 19 29</span>
           <span>📞 Tobias Metzger: +41 76 304 62 24</span>
-          <span>Hinweis: Joker-Einsatz ist moralisch ein kleiner Fail. 😜</span>
+          <span>Hinweis: Joker-Einsatz ist moralisch ein weiterer Shot. 😜</span>
         </div>
       </div>
 
@@ -218,8 +251,7 @@
           <p><strong>Level 1 geschafft! 🎯</strong></p>
           <p>
             Hint 1: Verlasst die Bar und geht in Richtung der SBB-Bahn-Gleise.
-            Kurz vor der Gundeli-Passerelle gibt es ein Restaurant, das für
-            viele BScene-Geschichten verantwortlich ist...
+            Kurz vor der Gundeli-Passerelle gibt es ein Restaurant, das vielleicht unser wohlverdientes Abendessen zubereitet...
           </p>
           <p><em>Und sagt mir, wie dieses Restaurant heisst.</em></p>
           <div class="input-wrap">
@@ -262,6 +294,10 @@
           <p>
             Dort findet ihr <strong>Jeroen und Niccolo</strong> – und hoffentlich
             ein paar Drinks zur Belohnung. 💜
+          </p>
+          <p>
+            Zeigt ihnen euren Shot-Barometer oben rechts. Sie wissen dann,
+            wie sehr ihr gelitten habt. 🥃
           </p>
         </div>
       </div>
@@ -374,7 +410,7 @@
       {
         type: 'mc',
         label: 'Level 2 – Frage 3',
-        text: 'Welche dieser Zahlen ist <strong>kein</strong> offizieller Ticketpreis?',
+        text: 'Welche dieser Zahlen ist kein offizieller Ticketpreis?',
         options: ['15 CHF', '25 CHF', '35 CHF', '50 CHF'],
         correctIndex: 2
       }
@@ -386,7 +422,7 @@
         type: 'text',
         label: 'Level 3 – Frage 1',
         text: 'Was wäre Niccolos liebster Main Act an der BScene?',
-        correctAnswers: ['ninachuba', 'nina chuba']
+        correctAnswers: ['ninichuba', 'nini chuba']
       },
       {
         type: 'text',
@@ -409,8 +445,9 @@
 
     let level = 1;
     let index = 0;
-    let activeBg = 1;
     let globalQuestionCounter = 0;
+    let activeBg = 1;
+    let shots = 0;
 
     const introEl = document.getElementById('intro');
     const quizAreaEl = document.getElementById('quiz-area');
@@ -432,9 +469,14 @@
     const success = document.getElementById('success-sound');
 
     const hint1Status = document.getElementById('hint1-status');
+    const shotValueEl = document.getElementById('shot-value');
 
     // Bilder vorladen
     BG_IMAGES.forEach(src => { const img = new Image(); img.src = src; });
+
+    function updateShotCounter() {
+      shotValueEl.textContent = shots;
+    }
 
     function currentQuestions() {
       if (level === 1) return level1Questions;
@@ -469,11 +511,15 @@
       level = 1;
       index = 0;
       globalQuestionCounter = 0;
+      shots = 0;
+      updateShotCounter();
+
       introEl.style.display = 'none';
       hint1El.style.display = 'none';
       hint2El.style.display = 'none';
       finalEl.style.display = 'none';
       quizAreaEl.style.display = 'block';
+
       if (BG_IMAGES.length) {
         bg1.style.backgroundImage = `url('${BG_IMAGES[0]}')`;
       }
@@ -483,7 +529,6 @@
     function renderQuestion() {
       const qs = currentQuestions();
       if (index >= qs.length) {
-        // Level ende
         if (level === 1) {
           showHint1();
         } else if (level === 2) {
@@ -564,6 +609,8 @@
 
     function handleWrong() {
       play(zonk);
+      shots++;
+      updateShotCounter();
       statusEl.textContent = getZonkText();
       statusEl.className = 'status error';
     }
@@ -596,7 +643,6 @@
       const val = normalize(raw);
       const ok =
         val === 'bundesbahn' ||
-        val === 'restaurantbundesbahn' ||
         val === 'restaurantbundesbahn';
       if (!val) {
         hint1Status.textContent = 'Ihr wart doch hoffentlich wirklich dort... 😉';
@@ -617,10 +663,12 @@
         hint1Status.textContent = 'Zonk. Das ist nicht der Name. Nochmal hinlaufen? 😈';
         hint1Status.className = 'status error';
         play(zonk);
+        shots++;
+        updateShotCounter();
       }
     }
 
-    // === Hint 2 (Passerelle + Tram 11 + Dreispitz) ===
+    // === Hint 2 ===
     function showHint2() {
       quizAreaEl.style.display = 'none';
       hint2El.style.display = 'block';
@@ -634,7 +682,7 @@
       renderQuestion();
     }
 
-    // === Finale Raketen-Seite ===
+    // === Finale ===
     function showFinal() {
       quizAreaEl.style.display = 'none';
       finalEl.style.display = 'block';
